@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import { logger } from '@/utils/logger';
 
 dotenv.config();
 
@@ -17,6 +16,9 @@ interface IEnvironmentConfig {
   logLevel: string;
   aiMemorySize: number;
   aiModel: string;
+  aiProvider: string;
+  ollamaBaseUrl: string;
+  ollamaModel: string;
 }
 
 const getConfig = (): IEnvironmentConfig => {
@@ -34,11 +36,14 @@ const getConfig = (): IEnvironmentConfig => {
     logLevel: process.env.LOG_LEVEL || 'info',
     aiMemorySize: parseInt(process.env.AI_MEMORY_SIZE || '10', 10),
     aiModel: process.env.AI_MODEL || 'gpt-3.5-turbo',
+    aiProvider: process.env.AI_PROVIDER || 'ollama',
+    ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+    ollamaModel: process.env.OLLAMA_MODEL || 'llama3.1:8b',
   };
 
   // Validate required configurations
   if (config.nodeEnv === 'production' && !process.env.JWT_SECRET) {
-    logger.error('JWT_SECRET is required in production environment');
+    console.error('JWT_SECRET is required in production environment');
     process.exit(1);
   }
 

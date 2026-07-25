@@ -14,6 +14,9 @@ export class AIService {
   private apiKey = config.openaiApiKey;
   private model = config.aiModel;
   private memorySize = config.aiMemorySize;
+  private aiProvider = config.aiProvider;
+  private ollamaBaseUrl = config.ollamaBaseUrl;
+  private ollamaModel = config.ollamaModel;
 
   /**
    * Get or create AI conversation
@@ -85,8 +88,8 @@ export class AIService {
       // Build conversation history
       const messages = await this.buildConversationHistory(conversation, content);
 
-      // Call OpenAI API
-      const aiResponse = await this.callOpenAI(messages);
+      // Call the configured AI provider
+      const aiResponse = await this.callAIProvider(messages);
 
       // Extract assistant content and tokens
       const assistantContent = aiResponse.choices[0].message.content;
@@ -205,30 +208,59 @@ export class AIService {
   }
 
   /**
-   * Call OpenAI API
+   * Call the configured AI provider
    */
-  private async callOpenAI(messages: OpenAIMessage[]): Promise<any> {
+  private async callAIProvider(messages: OpenAIMessage[]): Promise<any> {
     try {
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: this.model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 1000,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      if (this.aiProvider === 'openai') {
+        const response = await axios.post(
+          'https://api.openai.com/v1/chat/completions',
+          {
+            model: this.model,
+            messages,
+            temperature: 0.7,
+            max_tokens: 1000,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      return response.data;
+        return response.data;
+      }
+
+      const response = await axios.post(`${this.ollamaBaseUrl}/api/chat`, {
+        model: this.ollamaModel,
+        messages,
+        stream: false,
+      });
+
+      return {
+        choices: [
+          {
+            message: {
+              content: response.data.message?.content || '',
+            },
+          },
+        ],
+        usage: {
+          completion_tokens: Math.max(
+            1,
+            Math.ceil((response.data.message?.content || '').length / 4)
+          ),
+        },
+      };
     } catch (error: any) {
-      logger.error('OpenAI API error:', error.response?.data || error.message);
-      throw new AppError("Erreur lors de l'appel à l'API OpenAI", 500);
+      logger.error('AI provider error:', error.response?.data || error.message);
+      throw new AppError(
+        this.aiProvider === 'openai'
+          ? "Erreur lors de l'appel à l'API OpenAI"
+          : "Erreur lors de l'appel à Ollama local. Vérifiez que Ollama est démarré et que le modèle est téléchargé.",
+        500
+      );
     }
   }
 

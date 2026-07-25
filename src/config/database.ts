@@ -1,11 +1,15 @@
 import mongoose from 'mongoose';
 import { logger } from '@/utils/logger';
+import { config } from '@/config/environment';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/backend-api';
+    const mongoUri = config.mongodbUri;
 
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, {
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+    });
 
     logger.info(`✓ Database connected successfully at ${mongoUri}`);
 
@@ -18,7 +22,11 @@ export const connectDatabase = async (): Promise<void> => {
       logger.error('Database connection error:', error);
     });
   } catch (error) {
-    logger.error('Failed to connect to database:', error);
+    logger.error(
+      `Failed to connect to database at ${config.mongodbUri}. ` +
+        'Vérifiez que MongoDB est démarré et que MONGODB_URI est correct.',
+      error
+    );
     process.exit(1);
   }
 };
