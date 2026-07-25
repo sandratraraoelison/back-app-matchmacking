@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { messageController } from '@/controllers/MessageController';
 import { authenticate } from '@/middlewares/auth';
 import { validateBody } from '@/middlewares/validation';
-import { messageSchema } from '@/utils/validators';
+import { messageSendSchema } from '@/utils/validators';
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const router = Router();
  * @desc Send a message
  * @private
  */
-router.post('/send', authenticate, validateBody(messageSchema), (req, res) => {
+router.post('/send', authenticate, validateBody(messageSendSchema), (req, res) => {
   messageController.sendMessage(req, res);
 });
 

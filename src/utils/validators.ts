@@ -16,12 +16,14 @@ export const userLoginSchema = z.object({
 });
 
 export const userUpdateSchema = z.object({
+  email: z.string().email('Email invalide').optional(),
+  username: z.string().min(3, 'Username minimum 3 caractères').max(30).optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   bio: z.string().max(500).optional(),
   location: z.string().optional(),
   interests: z.array(z.string()).optional(),
-  avatar: z.string().url().optional(),
+  avatar: z.string().url().nullable().optional(),
 });
 
 // Message Validators

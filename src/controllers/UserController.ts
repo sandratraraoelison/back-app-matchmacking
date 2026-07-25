@@ -3,6 +3,7 @@ import { userService } from '@/services/UserService';
 import { ApiResponse } from '@/utils/response';
 import { userUpdateSchema } from '@/utils/validators';
 import { logger } from '@/utils/logger';
+import { AppError } from '@/middlewares/errorHandler';
 
 export class UserController {
   async getProfile(req: Request, res: Response): Promise<void> {
@@ -43,7 +44,9 @@ export class UserController {
       ApiResponse.success(res, user, 'Profil mis à jour');
     } catch (error) {
       logger.error('Update profile controller error:', error);
-      if (error instanceof Error && 'issues' in error) {
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.message, error.code, error.statusCode);
+      } else if (error instanceof Error && 'issues' in error) {
         ApiResponse.validationError(res, (error as any).issues);
       } else {
         ApiResponse.error(res, 'Erreur lors de la mise à jour du profil', 'UPDATE_PROFILE_ERROR');

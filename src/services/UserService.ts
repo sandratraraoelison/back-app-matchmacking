@@ -39,10 +39,12 @@ export class UserService {
     updates: {
       firstName?: string;
       lastName?: string;
+      email?: string;
+      username?: string;
       bio?: string;
       location?: string;
       interests?: string[];
-      avatar?: string;
+      avatar?: string | null;
     }
   ): Promise<IUserProfile> {
     try {
@@ -74,6 +76,9 @@ export class UserService {
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+        throw new AppError('Cet email ou ce nom d’utilisateur est déjà utilisé', 409, 'DUPLICATE_USER');
+      }
       logger.error('Update user profile error:', error);
       throw new AppError('Erreur lors de la mise à jour du profil', 500);
     }

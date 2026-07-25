@@ -196,7 +196,11 @@ export class MatchmakingService {
   /**
    * Get all matches for a user
    */
-  async getUserMatches(userId: string, page = 1, limit = 20): Promise<IMatch[]> {
+  async getUserMatches(
+    userId: string,
+    page = 1,
+    limit = 20
+  ): Promise<(IMatch & { targetUser?: IUserProfile })[]> {
     try {
       const skip = (page - 1) * limit;
 
@@ -208,7 +212,17 @@ export class MatchmakingService {
         .limit(limit)
         .lean();
 
-      return matches.map((match) => ({
+      const otherUserIds = matches.map((match) =>
+        match.user1Id.toString() === userId ? match.user2Id.toString() : match.user1Id.toString()
+      );
+      const users = await User.find({ _id: { $in: otherUserIds } }).lean();
+      const usersById = new Map(users.map((user) => [user._id.toString(), user]));
+
+      return matches.map((match) => {
+        const otherUserId = match.user1Id.toString() === userId ? match.user2Id.toString() : match.user1Id.toString();
+        const targetUser = usersById.get(otherUserId);
+
+        return {
         _id: match._id?.toString(),
         user1Id: match.user1Id.toString(),
         user2Id: match.user2Id.toString(),
@@ -216,7 +230,25 @@ export class MatchmakingService {
         commonInterests: match.commonInterests,
         matchedAt: match.matchedAt,
         status: match.status,
-      }));
+        targetUser: targetUser
+          ? {
+              _id: targetUser._id.toString(),
+              email: targetUser.email,
+              username: targetUser.username,
+              firstName: targetUser.firstName,
+              lastName: targetUser.lastName,
+              avatar: targetUser.avatar,
+              bio: targetUser.bio,
+              interests: targetUser.interests,
+              location: targetUser.location,
+              createdAt: targetUser.createdAt,
+              updatedAt: targetUser.updatedAt,
+              isOnline: targetUser.isOnline,
+              lastSeen: targetUser.lastSeen,
+            }
+          : undefined,
+        };
+      });
     } catch (error) {
       logger.error('Get user matches error:', error);
       throw new AppError('Erreur lors de la récupération des matchs', 500);
