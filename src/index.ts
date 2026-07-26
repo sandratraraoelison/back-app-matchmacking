@@ -16,6 +16,7 @@ import userRoutes from '@/routes/users';
 import matchRoutes from '@/routes/matches';
 import messageRoutes from '@/routes/messages';
 import aiRoutes from '@/routes/ai';
+import postRoutes from '@/routes/posts';
 
 class App {
   private app: Express;
@@ -85,6 +86,7 @@ class App {
     this.app.use('/api/matches', authenticate, matchRoutes);
     this.app.use('/api/messages', authenticate, messageRoutes);
     this.app.use('/api/ai', authenticate, aiRoutes);
+    this.app.use('/api/posts', authenticate, postRoutes);
 
     // 404 handler
     this.app.use('*', notFoundHandler);

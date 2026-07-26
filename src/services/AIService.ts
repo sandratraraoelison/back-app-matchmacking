@@ -121,6 +121,18 @@ export class AIService {
     }
   }
 
+  async translateText(content: string, targetLanguage: 'fr' | 'en'): Promise<string> {
+    const language = targetLanguage === 'fr' ? 'French' : 'English';
+    const response = await this.callAIProvider([
+      {
+        role: 'system',
+        content: `You are a professional translator. Translate the user text into ${language}. Preserve emojis, hashtags, names and line breaks. Return only the translation, without quotes or explanation.`,
+      },
+      { role: 'user', content },
+    ]);
+    return String(response.choices[0].message.content || '').trim();
+  }
+
   /**
    * Get conversation history
    */

@@ -32,9 +32,12 @@ const messageSchema = new Schema<IMessageDocument>(
     },
     messageType: {
       type: String,
-      enum: ['text', 'image', 'file'],
+      enum: ['text', 'image', 'file', 'audio'],
       default: 'text',
     },
+    attachmentName: { type: String, maxlength: 255 },
+    attachmentMimeType: { type: String, maxlength: 100 },
+    attachmentSize: { type: Number, min: 0 },
     isRead: {
       type: Boolean,
       default: false,

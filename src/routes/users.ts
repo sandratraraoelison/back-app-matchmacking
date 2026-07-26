@@ -33,6 +33,15 @@ router.get('/search', authenticate, (req, res) => {
   userController.searchUsers(req, res);
 });
 
+router.get('/:userId', authenticate, async (req, res) => {
+  try {
+    const user = await userController.getPublicProfile(req.params.userId);
+    res.json({ success: true, data: user });
+  } catch {
+    res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+  }
+});
+
 /**
  * @route DELETE /users/account
  * @desc Delete current user account

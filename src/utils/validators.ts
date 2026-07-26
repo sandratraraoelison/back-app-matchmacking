@@ -29,7 +29,10 @@ export const userUpdateSchema = z.object({
 // Message Validators
 export const messageSchema = z.object({
   content: z.string().min(1, 'Message ne peut pas être vide').max(5000),
-  messageType: z.enum(['text', 'image', 'file']).default('text'),
+  messageType: z.enum(['text', 'image', 'file', 'audio']).default('text'),
+  attachmentName: z.string().max(255).optional(),
+  attachmentMimeType: z.string().max(100).optional(),
+  attachmentSize: z.number().nonnegative().max(15 * 1024 * 1024).optional(),
 });
 
 export const messageSendSchema = messageSchema.extend({
@@ -50,6 +53,11 @@ export const matchRequestSchema = z.object({
 export const aiMessageSchema = z.object({
   content: z.string().min(1, 'Message ne peut pas être vide').max(10000),
   conversationId: z.string().optional(),
+});
+
+export const translationSchema = z.object({
+  content: z.string().trim().min(1).max(5000),
+  targetLanguage: z.enum(['fr', 'en']),
 });
 
 // Pagination Validator

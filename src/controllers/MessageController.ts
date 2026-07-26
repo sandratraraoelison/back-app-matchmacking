@@ -14,9 +14,24 @@ export class MessageController {
         return;
       }
 
-      const { receiverId, content, messageType } = messageSendSchema.parse(req.body);
+      const {
+        receiverId,
+        content,
+        messageType,
+        attachmentName,
+        attachmentMimeType,
+        attachmentSize,
+      } = messageSendSchema.parse(req.body);
 
-      const message = await messageService.sendMessage(userId, receiverId, content, messageType);
+      const message = await messageService.sendMessage(
+        userId,
+        receiverId,
+        content,
+        messageType,
+        attachmentName,
+        attachmentMimeType,
+        attachmentSize
+      );
 
       ApiResponse.created(res, message, 'Message envoyé');
     } catch (error) {

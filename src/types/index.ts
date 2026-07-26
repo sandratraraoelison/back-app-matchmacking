@@ -61,7 +61,10 @@ export interface IMessage {
   receiverId: string;
   conversationId: string;
   content: string;
-  messageType: 'text' | 'image' | 'file';
+  messageType: 'text' | 'image' | 'file' | 'audio';
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  attachmentSize?: number;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +75,19 @@ export interface IConversation {
   participants: string[];
   lastMessage?: IMessage;
   lastMessageAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IPost {
+  _id?: string;
+  authorId: string;
+  content: string;
+  image?: string;
+  mood?: string;
+  location?: string;
+  likesCount: number;
+  commentsCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

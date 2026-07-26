@@ -44,7 +44,10 @@ export class MessageService {
     senderId: string,
     receiverId: string,
     content: string,
-    messageType: 'text' | 'image' | 'file' = 'text'
+    messageType: 'text' | 'image' | 'file' | 'audio' = 'text',
+    attachmentName?: string,
+    attachmentMimeType?: string,
+    attachmentSize?: number
   ): Promise<IMessage> {
     try {
       // Get or create conversation
@@ -57,6 +60,9 @@ export class MessageService {
         conversationId: conversation._id,
         content,
         messageType,
+        attachmentName,
+        attachmentMimeType,
+        attachmentSize,
         isRead: false,
       });
 
@@ -77,6 +83,9 @@ export class MessageService {
         conversationId: message.conversationId.toString(),
         content: message.content,
         messageType: message.messageType,
+        attachmentName: message.attachmentName,
+        attachmentMimeType: message.attachmentMimeType,
+        attachmentSize: message.attachmentSize,
         isRead: message.isRead,
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
@@ -108,6 +117,9 @@ export class MessageService {
         conversationId: msg.conversationId.toString(),
         content: msg.content,
         messageType: msg.messageType,
+        attachmentName: msg.attachmentName,
+        attachmentMimeType: msg.attachmentMimeType,
+        attachmentSize: msg.attachmentSize,
         isRead: msg.isRead,
         createdAt: msg.createdAt,
         updatedAt: msg.updatedAt,

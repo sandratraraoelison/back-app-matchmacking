@@ -85,10 +85,24 @@ class SocketManager {
     /**
      * Message event: user sends a message
      */
-    socket.on('message:send', async (data: { receiverId: string; content: string }) => {
+    socket.on('message:send', async (data: {
+      receiverId: string;
+      content: string;
+      messageType?: 'text' | 'image' | 'file' | 'audio';
+      attachmentName?: string;
+      attachmentMimeType?: string;
+      attachmentSize?: number;
+    }) => {
       try {
         const senderId = socket.data.userId;
-        const { receiverId, content } = data;
+        const {
+          receiverId,
+          content,
+          messageType = 'text',
+          attachmentName,
+          attachmentMimeType,
+          attachmentSize,
+        } = data;
 
         if (!receiverId || !content) {
           socket.emit('error', { message: 'Missing receiverId or content' });
@@ -96,7 +110,15 @@ class SocketManager {
         }
 
         // Save message to database
-        const message = await messageService.sendMessage(senderId, receiverId, content);
+        const message = await messageService.sendMessage(
+          senderId,
+          receiverId,
+          content,
+          messageType,
+          attachmentName,
+          attachmentMimeType,
+          attachmentSize
+        );
 
         // Get conversation
         const conversation = await messageService.getOrCreateConversation(senderId, receiverId);

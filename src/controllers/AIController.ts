@@ -1,10 +1,24 @@
 import { Request, Response } from 'express';
 import { aiService } from '@/services/AIService';
 import { ApiResponse } from '@/utils/response';
-import { aiMessageSchema } from '@/utils/validators';
+import { aiMessageSchema, translationSchema } from '@/utils/validators';
 import { logger } from '@/utils/logger';
 
 export class AIController {
+  async translate(req: Request, res: Response): Promise<void> {
+    try {
+      const { content, targetLanguage } = translationSchema.parse(req.body);
+      const translation = await aiService.translateText(content, targetLanguage);
+      ApiResponse.success(res, { translation }, 'Texte traduit');
+    } catch (error) {
+      logger.error('AI translation error:', error);
+      if (error instanceof Error && 'issues' in error) {
+        ApiResponse.validationError(res, (error as any).issues);
+      } else {
+        ApiResponse.error(res, 'Traduction indisponible', 'AI_TRANSLATION_ERROR');
+      }
+    }
+  }
   async sendMessage(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;

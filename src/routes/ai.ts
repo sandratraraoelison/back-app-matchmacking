@@ -15,6 +15,10 @@ router.post('/message', authenticate, validateBody(aiMessageSchema), (req, res) 
   aiController.sendMessage(req, res);
 });
 
+router.post('/translate', authenticate, (req, res) => {
+  aiController.translate(req, res);
+});
+
 /**
  * @route GET /ai/history
  * @desc Get AI conversation history

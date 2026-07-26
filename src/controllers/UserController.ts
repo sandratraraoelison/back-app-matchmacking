@@ -6,6 +6,10 @@ import { logger } from '@/utils/logger';
 import { AppError } from '@/middlewares/errorHandler';
 
 export class UserController {
+  async getPublicProfile(userId: string) {
+    const { email: _email, ...publicProfile } = await userService.getUserProfile(userId);
+    return publicProfile;
+  }
   async getProfile(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId;

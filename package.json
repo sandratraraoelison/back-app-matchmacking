@@ -13,6 +13,7 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
+    "seed:test-users": "tsx scripts/seed-test-users.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
