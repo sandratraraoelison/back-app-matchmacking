@@ -103,4 +103,12 @@ router.post('/mark-read', authenticate, (req, res) => {
   messageController.markAsRead(req, res);
 });
 
+router.patch('/:messageId', authenticate, (req, res) => {
+  messageController.editMessage(req, res);
+});
+
+router.delete('/:messageId', authenticate, (req, res) => {
+  messageController.deleteMessage(req, res);
+});
+
 export default router;

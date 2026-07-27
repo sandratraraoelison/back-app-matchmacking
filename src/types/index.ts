@@ -66,6 +66,8 @@ export interface IMessage {
   attachmentMimeType?: string;
   attachmentSize?: number;
   isRead: boolean;
+  editedAt?: Date;
+  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

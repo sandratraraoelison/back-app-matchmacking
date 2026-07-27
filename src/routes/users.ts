@@ -1,10 +1,38 @@
-import { Router } from 'express';
+import { Router, raw } from 'express';
+import { randomUUID } from 'crypto';
+import { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
 import { userController } from '@/controllers/UserController';
 import { authenticate } from '@/middlewares/auth';
 import { validateBody } from '@/middlewares/validation';
 import { userUpdateSchema } from '@/utils/validators';
 
 const router = Router();
+
+const avatarExtensions: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+};
+
+router.post('/avatar', authenticate, raw({ type: () => true, limit: '5mb' }), async (req, res) => {
+  const mimeType = String(req.headers['content-type'] || '').split(';')[0].toLowerCase();
+  if (!avatarExtensions[mimeType]) {
+    res.status(400).json({ success: false, message: 'Format accepté : JPG, PNG, WebP ou GIF.' });
+    return;
+  }
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    res.status(400).json({ success: false, message: 'Image vide.' });
+    return;
+  }
+  const fileName = `${req.user?.userId}-${randomUUID()}${avatarExtensions[mimeType]}`;
+  const avatarDir = path.resolve(process.cwd(), 'uploads', 'avatars');
+  await mkdir(avatarDir, { recursive: true });
+  await writeFile(path.join(avatarDir, fileName), req.body);
+  const url = `${req.protocol}://${req.get('host')}/uploads/avatars/${fileName}`;
+  res.status(201).json({ success: true, data: { url } });
+});
 
 /**
  * @route GET /users/profile

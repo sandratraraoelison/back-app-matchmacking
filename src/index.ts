@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { config } from '@/config/environment';
 import { connectDatabase } from '@/config/database';
 import { socketManager } from '@/services/SocketManager';
@@ -45,7 +46,7 @@ class App {
    */
   private setupMiddlewares(): void {
     // Security middlewares
-    this.app.use(helmet());
+    this.app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
     this.app.use(
       cors({
         origin: config.allowedOrigins,
@@ -56,6 +57,7 @@ class App {
     // Body parsing middlewares
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
+    this.app.use('/uploads/avatars', express.static(path.resolve(process.cwd(), 'uploads', 'avatars')));
 
     // Request logging
     this.app.use((req, _res, next) => {

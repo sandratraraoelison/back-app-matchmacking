@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { messageService } from '@/services/MessageService';
 import { ApiResponse } from '@/utils/response';
-import { messageSendSchema } from '@/utils/validators';
+import { messageEditSchema, messageSendSchema } from '@/utils/validators';
 import { logger } from '@/utils/logger';
+import { AppError } from '@/middlewares/errorHandler';
+import { socketManager } from '@/services/SocketManager';
 
 export class MessageController {
   async sendMessage(req: Request, res: Response): Promise<void> {
@@ -124,6 +126,49 @@ export class MessageController {
     } catch (error) {
       logger.error('Mark as read controller error:', error);
       ApiResponse.error(res, 'Erreur lors de la marque des messages', 'MARK_READ_ERROR');
+    }
+  }
+
+  async editMessage(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        ApiResponse.unauthorized(res);
+        return;
+      }
+      const { content } = messageEditSchema.parse(req.body);
+      const message = await messageService.editMessage(req.params.messageId, userId, content);
+      socketManager.notifyMessageUpdated(message);
+      ApiResponse.success(res, message, 'Message modifié');
+    } catch (error) {
+      logger.error('Edit message controller error:', error);
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.message, error.code, error.statusCode);
+      } else if (error instanceof Error && 'issues' in error) {
+        ApiResponse.validationError(res, (error as any).issues);
+      } else {
+        ApiResponse.error(res, 'Erreur lors de la modification du message', 'EDIT_MESSAGE_ERROR');
+      }
+    }
+  }
+
+  async deleteMessage(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        ApiResponse.unauthorized(res);
+        return;
+      }
+      const deleted = await messageService.deleteMessage(req.params.messageId, userId);
+      socketManager.notifyMessageDeleted(userId, deleted.receiverId, req.params.messageId);
+      ApiResponse.success(res, { success: true }, 'Message supprimé');
+    } catch (error) {
+      logger.error('Delete message controller error:', error);
+      if (error instanceof AppError) {
+        ApiResponse.error(res, error.message, error.code, error.statusCode);
+      } else {
+        ApiResponse.error(res, 'Erreur lors de la suppression du message', 'DELETE_MESSAGE_ERROR');
+      }
     }
   }
 }

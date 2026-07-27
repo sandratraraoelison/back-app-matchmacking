@@ -87,6 +87,8 @@ export class MessageService {
         attachmentMimeType: message.attachmentMimeType,
         attachmentSize: message.attachmentSize,
         isRead: message.isRead,
+        editedAt: message.editedAt,
+        deletedAt: message.deletedAt,
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
       };
@@ -104,7 +106,7 @@ export class MessageService {
     try {
       const skip = (page - 1) * limit;
 
-      const messages = await Message.find({ conversationId })
+      const messages = await Message.find({ conversationId, deletedAt: null })
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -121,6 +123,8 @@ export class MessageService {
         attachmentMimeType: msg.attachmentMimeType,
         attachmentSize: msg.attachmentSize,
         isRead: msg.isRead,
+        editedAt: msg.editedAt,
+        deletedAt: msg.deletedAt,
         createdAt: msg.createdAt,
         updatedAt: msg.updatedAt,
       }));
@@ -128,6 +132,94 @@ export class MessageService {
       logger.error('Get conversation messages error:', error);
       throw new AppError('Erreur lors de la récupération des messages', 500);
     }
+  }
+
+  /**
+   * Edit a text message. Only its sender may edit it.
+   */
+  async editMessage(messageId: string, userId: string, content: string): Promise<IMessage> {
+    const message = await Message.findOne({
+      _id: messageId,
+      senderId: userId,
+      deletedAt: null,
+    });
+
+    if (!message) {
+      throw new AppError('Message non trouvé', 404, 'MESSAGE_NOT_FOUND');
+    }
+    if (message.messageType !== 'text') {
+      throw new AppError('Seuls les messages texte peuvent être modifiés', 400, 'MESSAGE_NOT_EDITABLE');
+    }
+
+    message.content = content;
+    message.editedAt = new Date();
+    await message.save();
+
+    await Conversation.updateOne(
+      { _id: message.conversationId, 'lastMessage._id': message._id },
+      {
+        $set: {
+          'lastMessage.content': message.content,
+          'lastMessage.editedAt': message.editedAt,
+          'lastMessage.updatedAt': message.updatedAt,
+        },
+      }
+    );
+
+    return {
+      _id: message._id.toString(),
+      senderId: message.senderId.toString(),
+      receiverId: message.receiverId.toString(),
+      conversationId: message.conversationId.toString(),
+      content: message.content,
+      messageType: message.messageType,
+      attachmentName: message.attachmentName,
+      attachmentMimeType: message.attachmentMimeType,
+      attachmentSize: message.attachmentSize,
+      isRead: message.isRead,
+      editedAt: message.editedAt,
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+    };
+  }
+
+  /**
+   * Soft-delete a message. The record remains auditable but is no longer returned.
+   */
+  async deleteMessage(messageId: string, userId: string): Promise<{ receiverId: string; conversationId: string }> {
+    const message = await Message.findOne({
+      _id: messageId,
+      senderId: userId,
+      deletedAt: null,
+    });
+
+    if (!message) {
+      throw new AppError('Message non trouvé', 404, 'MESSAGE_NOT_FOUND');
+    }
+
+    message.deletedAt = new Date();
+    await message.save();
+
+    const latestMessage = await Message.findOne({
+      conversationId: message.conversationId,
+      deletedAt: null,
+    }).sort({ createdAt: -1 });
+
+    if (latestMessage) {
+      await Conversation.findByIdAndUpdate(message.conversationId, {
+        lastMessage: latestMessage,
+        lastMessageAt: latestMessage.createdAt,
+      });
+    } else {
+      await Conversation.findByIdAndUpdate(message.conversationId, {
+        $unset: { lastMessage: 1, lastMessageAt: 1 },
+      });
+    }
+
+    return {
+      receiverId: message.receiverId.toString(),
+      conversationId: message.conversationId.toString(),
+    };
   }
 
   /**

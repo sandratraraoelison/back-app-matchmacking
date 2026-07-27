@@ -39,6 +39,10 @@ export const messageSendSchema = messageSchema.extend({
   receiverId: z.string().nonempty('receiverId est requis'),
 });
 
+export const messageEditSchema = z.object({
+  content: z.string().trim().min(1, 'Message ne peut pas être vide').max(5000),
+});
+
 export const conversationSchema = z.object({
   participants: z.array(z.string()).min(2, 'Au moins 2 participants'),
 });

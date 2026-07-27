@@ -43,6 +43,12 @@ const messageSchema = new Schema<IMessageDocument>(
       default: false,
       index: true,
     },
+    editedAt: Date,
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

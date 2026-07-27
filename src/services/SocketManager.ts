@@ -1,16 +1,18 @@
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@/utils/jwt';
 import { messageService } from '@/services/MessageService';
-import { ISocketUser } from '@/types';
+import { IMessage, ISocketUser } from '@/types';
 import { logger } from '@/utils/logger';
 
 class SocketManager {
   private connectedUsers: Map<string, ISocketUser> = new Map();
+  private io?: Server;
 
   /**
    * Initialize socket.io events
    */
   setupEvents(io: Server): void {
+    this.io = io;
     io.on('connection', (socket: Socket) => {
       logger.info(`User connected: ${socket.id}`);
 
@@ -33,6 +35,17 @@ class SocketManager {
         logger.error('Socket error:', error);
       });
     });
+  }
+
+  notifyMessageUpdated(message: IMessage): void {
+    this.io?.to(`user:${message.senderId}`).emit('message:updated', message);
+    this.io?.to(`user:${message.receiverId}`).emit('message:updated', message);
+  }
+
+  notifyMessageDeleted(senderId: string, receiverId: string, messageId: string): void {
+    const payload = { messageId };
+    this.io?.to(`user:${senderId}`).emit('message:deleted', payload);
+    this.io?.to(`user:${receiverId}`).emit('message:deleted', payload);
   }
 
   /**
